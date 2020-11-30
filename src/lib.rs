@@ -1,14 +1,56 @@
 //! A simple [run-length-encoding](https://en.wikipedia.org/wiki/Run-length_encoding)
 //! implementation for light compression
 //!
-//! # Breaking changes
+//! ## Examples
 //!
-//! This library will not have breaking changes but is kept in a `0.0.x` state
-//! in case another developer has a better use for the `rle` crate name. If you
-//! do, you may contact me using the following methods:
+//! Encoding:
 //!
-//! - [Website](https://ogriffiths.com)
-//! - [Github](https://github.com/owez/)
+//! ```rust
+//! use rle;
+//!
+//! fn main() {
+//!     let data = &[44, 43, 6, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 3];
+//!     let compressed = rle::compress(data);
+//!
+//!     println!("normal: {}, compressed: {}", data.len(), compressed.len());
+//!
+//!     // will show "normal: 16, compressed: 10"
+//! }
+//! ```
+//!
+//! ## Under the hood
+//!
+//! This `rle` library uses a custom [run-length-encoding](https://en.wikipedia.org/wiki/Run-length_encoding)
+//! technique in order to get the most efficiant compression results. It achieves
+//! this by allowing all repeating characters under 6x through, e.g:
+//!
+//! ```none
+//! helllllo!
+//! ```
+//!
+//! But allows anything 6x or above through, e.g:
+//!
+//! ```none
+//! hellllllllllllllllllllllllllllllllllllllllllllo!
+//! ```
+//!
+//! This is due to the encoding using a `u32` under the hood to store the length,
+//! which means the it can store up to ~4 billion repeating characters until
+//! overflow. A run-length-encoded block would look like the following for the
+//! previous example:
+//!
+//! ```none
+//! [h, e, 4, 0, 0, 0, 44, o, !]
+//! ```
+//!
+//! You may assume whatever binary encoding you'd like for these letters to
+//! properly expand this block, but in essense it uses an [End-of-Transmission character](https://en.wikipedia.org/wiki/End-of-Transmission_character)
+//! to represent the start of an run-length-encoded block and has a `[u8; 4]`
+//! (which represents the previously mentioned `u32` in big-endian form).
+//!
+//! After that, it simply has a `u8` for the byte it is representing and continued
+//! further onwards; looping this compression/decompression until the end of the
+//! inputted bytes.
 
 /// The [End-of-Transmission character](https://en.wikipedia.org/wiki/End-of-Transmission_character),
 /// which in ASCII and Unicode is the 4th character
@@ -16,8 +58,20 @@ const END_OF_TRANSMISSION: u8 = 4;
 
 /// Encodes to custom `rle` from given bytes
 ///
-/// This fucntion only shortens 6 repetitions or more otherwise it's less
-/// efficiant to do so
+/// # Example
+///
+/// ```rust
+/// use rle;
+///
+/// fn main() {
+///     let data = &[44, 43, 6, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 3];
+///     let compressed = rle::compress(data);
+///
+///     println!("normal: {}, compressed: {}", data.len(), compressed.len());
+///
+///     // will show "normal: 16, compressed: 10"
+/// }
+/// ```
 pub fn encode(data: impl AsRef<[u8]>) -> Vec<u8> {
     fn compute_buf(buf: &mut (u8, u32), output: &mut Vec<u8>) {
         if buf.1 >= 6 {
@@ -49,6 +103,8 @@ pub fn encode(data: impl AsRef<[u8]>) -> Vec<u8> {
 
     output
 }
+
+// TODO: decoding
 
 #[cfg(test)]
 mod tests {
