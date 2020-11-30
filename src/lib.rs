@@ -6,8 +6,6 @@
 //! Encoding:
 //!
 //! ```rust
-//! use rle;
-//!
 //! fn main() {
 //!     let data = &[44, 43, 6, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 3];
 //!     let compressed = rle::compress(data);
@@ -56,13 +54,11 @@
 /// which in ASCII and Unicode is the 4th character
 const END_OF_TRANSMISSION: u8 = 4;
 
-/// Encodes to custom `rle` from given bytes
+/// Compresses to custom `rle` from given bytes
 ///
 /// # Example
 ///
 /// ```rust
-/// use rle;
-///
 /// fn main() {
 ///     let data = &[44, 43, 6, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 3];
 ///     let compressed = rle::compress(data);
@@ -72,7 +68,7 @@ const END_OF_TRANSMISSION: u8 = 4;
 ///     // will show "normal: 16, compressed: 10"
 /// }
 /// ```
-pub fn encode(data: impl AsRef<[u8]>) -> Vec<u8> {
+pub fn compress(data: impl AsRef<[u8]>) -> Vec<u8> {
     fn compute_buf(buf: &mut (u8, u32), output: &mut Vec<u8>) {
         if buf.1 >= 6 {
             // do RLE if more efficiant to do so
@@ -111,23 +107,23 @@ mod tests {
     use super::*;
 
     #[test]
-    fn no_change_encode() {
+    fn no_change_compress() {
         let exp1 = &[0, 1, 2, 3, 4, 5, 6, 7];
         let exp2 = &[0, 0, 0, 0, 0];
         let exp3 = &[0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0];
 
-        assert_eq!(encode(exp1), exp1);
-        assert_eq!(encode(exp2), exp2);
-        assert_eq!(encode(exp3), exp3);
+        assert_eq!(compress(exp1), exp1);
+        assert_eq!(compress(exp2), exp2);
+        assert_eq!(compress(exp3), exp3);
     }
 
     #[test]
-    fn simple_encode() {
+    fn simple_compress() {
         let six = 6u32.to_be_bytes();
         let sixty_four = 64u32.to_be_bytes();
 
         assert_eq!(
-            encode(&[0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]),
+            compress(&[0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]),
             &[
                 END_OF_TRANSMISSION,
                 six[0],
@@ -145,7 +141,7 @@ mod tests {
         );
 
         assert_eq!(
-            encode(&[
+            compress(&[
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0, 0, 0, 0, 64, 64, 230
