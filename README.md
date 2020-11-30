@@ -1,4 +1,4 @@
-# `rle` -- Run-length-encoding
+# Run-length-encoding: `rle`
 
 A simple [run-length-encoding](https://en.wikipedia.org/wiki/Run-length_encoding) implementation for light compression
 
