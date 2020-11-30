@@ -15,8 +15,10 @@
 /// which in ASCII and Unicode is the 4th character
 const END_OF_TRANSMISSION: u8 = 4;
 
-/// Encodes to custom `rle`, only shortens 6 repetitions or more otherwise it's
-/// less efficiant to do so
+/// Encodes to custom `rle` from given bytes
+///
+/// This fucntion only shortens 6 repetitions or more otherwise it's less
+/// efficiant to do so
 pub fn encode(data: impl AsRef<[u8]>) -> Vec<u8> {
     fn compute_buf(buf: &mut (u8, u32), output: &mut Vec<u8>) {
         if buf.1 >= 6 {
@@ -62,5 +64,48 @@ mod tests {
         assert_eq!(encode(exp1), exp1);
         assert_eq!(encode(exp2), exp2);
         assert_eq!(encode(exp3), exp3);
+    }
+
+    #[test]
+    fn simple_encode() {
+        let six = 6u32.to_be_bytes();
+        let sixty_four = 64u32.to_be_bytes();
+
+        assert_eq!(
+            encode(&[0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]),
+            &[
+                END_OF_TRANSMISSION,
+                six[0],
+                six[1],
+                six[2],
+                six[3],
+                0,
+                END_OF_TRANSMISSION,
+                six[0],
+                six[1],
+                six[2],
+                six[3],
+                1
+            ]
+        );
+
+        assert_eq!(
+            encode(&[
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 64, 64, 230
+            ]),
+            &[
+                END_OF_TRANSMISSION,
+                sixty_four[0],
+                sixty_four[1],
+                sixty_four[2],
+                sixty_four[3],
+                0,
+                64,
+                64,
+                230
+            ]
+        );
     }
 }
